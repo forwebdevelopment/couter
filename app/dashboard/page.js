@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import useVoiceCounter from "../hooks/useVoiceCounter";
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -18,6 +18,29 @@ export default function DashboardPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
+
+  const {
+  supported,
+  isListening,
+  lastSpokenWord,
+  voiceMessage,
+  startListening,
+  stopListening,
+} = useVoiceCounter({
+  targetWords: ["ram", "राम"],
+
+  language: "hi-IN",
+
+  onCountIncrease: (amount) => {
+    setCount(
+      (previous) =>
+        Number(previous || 0) +
+        amount
+    );
+
+    setMessage("");
+  },
+});
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
 
@@ -349,7 +372,89 @@ export default function DashboardPage() {
 
         </div>
 
+
+        <div className="voice-card">
+
+  <div className="voice-card-header">
+    <div className="voice-icon">
+      🎤
+    </div>
+
+    <div>
+      <span className="voice-label">
+        VOICE COUNTER
+      </span>
+
+      <h2>
+        Count by speaking
+      </h2>
+    </div>
+  </div>
+
+  <p className="voice-description">
+    Say <strong>Ram</strong> to increase the count.
+    Every detected word updates the count locally.
+  </p>
+
+  <div className="voice-info-grid">
+
+    <div className="voice-info-box">
+      <span>Status</span>
+
+      <strong>
+        {isListening
+          ? "Listening..."
+          : "Stopped"}
+      </strong>
+    </div>
+
+    <div className="voice-info-box">
+      <span>Last detected</span>
+
+      <strong>
+        {lastSpokenWord || "—"}
+      </strong>
+    </div>
+
+  </div>
+
+  {!supported ? (
+
+    <div className="voice-error">
+      Voice recognition is not supported
+      in this browser.
+    </div>
+
+  ) : !isListening ? (
+
+    <button
+      className="start-voice-btn"
+      onClick={startListening}
+    >
+      🎤 Start Voice Counter
+    </button>
+
+  ) : (
+
+    <button
+      className="stop-voice-btn"
+      onClick={stopListening}
+    >
+      Stop Voice Counter
+    </button>
+
+  )}
+
+  {voiceMessage && (
+    <div className="voice-message">
+      {voiceMessage}
+    </div>
+  )}
+
+</div>
+
       </section>
+
 
       <style jsx>{`
 
@@ -793,6 +898,195 @@ export default function DashboardPage() {
   background: #eff6ff;
 
   color: #2563eb;
+}
+
+.voice-card {
+  margin-top: 28px;
+
+  padding: 32px;
+
+  background: #ffffff;
+
+  border: 1px solid #e8edf5;
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 16px 40px
+    rgba(15, 23, 42, 0.05);
+}
+
+.voice-card-header {
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
+}
+
+.voice-icon {
+  width: 52px;
+  height: 52px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 14px;
+
+  background: #eff6ff;
+
+  font-size: 24px;
+}
+
+.voice-label {
+  color: #2563eb;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  letter-spacing: 1.4px;
+}
+
+.voice-card-header h2 {
+  margin: 5px 0 0;
+
+  color: #0f172a;
+
+  font-size: 24px;
+}
+
+.voice-description {
+  margin: 20px 0 22px;
+
+  color: #64748b;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+.voice-description strong {
+  color: #2563eb;
+}
+
+.voice-info-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 14px;
+
+  margin-bottom: 20px;
+}
+
+.voice-info-box {
+  padding: 16px;
+
+  background: #f8fafc;
+
+  border-radius: 12px;
+
+  border: 1px solid #edf2f7;
+}
+
+.voice-info-box span {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #64748b;
+
+  font-size: 12px;
+
+  font-weight: 600;
+}
+
+.voice-info-box strong {
+  color: #0f172a;
+
+  font-size: 16px;
+}
+
+.start-voice-btn,
+.stop-voice-btn {
+  width: 100%;
+
+  height: 52px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  color: #ffffff;
+
+  font-size: 15px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.start-voice-btn {
+  background: #2563eb;
+}
+
+.start-voice-btn:hover {
+  background: #1d4ed8;
+}
+
+.stop-voice-btn {
+  background: #dc2626;
+}
+
+.stop-voice-btn:hover {
+  background: #b91c1c;
+}
+
+.voice-message {
+  margin-top: 14px;
+
+  padding: 12px 14px;
+
+  border-radius: 10px;
+
+  background: #eff6ff;
+
+  color: #1d4ed8;
+
+  font-size: 13px;
+
+  font-weight: 600;
+}
+
+.voice-error {
+  padding: 14px;
+
+  border-radius: 10px;
+
+  background: #fef2f2;
+
+  color: #b91c1c;
+
+  font-size: 14px;
+
+  border: 1px solid #fecaca;
+}
+
+@media(max-width: 600px) {
+
+  .voice-card {
+    padding: 24px 20px;
+  }
+
+  .voice-info-grid {
+    grid-template-columns: 1fr;
+  }
+
 }
 
       `}</style>
