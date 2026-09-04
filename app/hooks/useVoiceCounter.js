@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 
 export default function useVoiceCounter({
   onCountIncrease,
-  targetWords = ["ram", "राम" , "Radha"],
+  targetWords = ["ram", "राम" , "Radha","राधा"],
   language = "hi-IN",
 }) {
   const recognitionRef = useRef(null);
