@@ -9,6 +9,9 @@ export default function HistoryPage() {
   const [user, setUser] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editCount, setEditCount] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -46,6 +49,138 @@ export default function HistoryPage() {
     }
   }
 
+
+  function startEdit(item) {
+    setEditingId(item.id);
+
+    setEditCount(item.count);
+  }
+
+
+  function cancelEdit() {
+    setEditingId(null);
+
+    setEditCount("");
+  }
+
+
+  async function updateCount(id) {
+    if (!user) return;
+
+    const count = Number(editCount);
+
+    if (!Number.isInteger(count) || count < 0) {
+      alert("Please enter a valid count");
+
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+
+      const response = await fetch("/api/count-history", {
+        method: "PUT",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          id: id,
+          userId: user.userId,
+          count: count,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Unable to update record");
+
+        return;
+      }
+
+      setHistory((previous) =>
+        previous.map((item) =>
+          item.id === id
+            ? {
+              ...item,
+              count: Number(data.data.count),
+            }
+            : item
+        )
+      );
+
+      setEditingId(null);
+
+      setEditCount("");
+
+    } catch (error) {
+      console.error(error);
+
+      alert("Something went wrong");
+
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+
+  async function deleteCount(id) {
+    if (!user) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this record?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+
+      const response = await fetch("/api/count-history", {
+        method: "DELETE",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          id: id,
+          userId: user.userId,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message || "Unable to delete record");
+
+        return;
+      }
+
+      setHistory((previous) =>
+        previous.filter(
+          (item) => item.id !== id
+        )
+      );
+
+    } catch (error) {
+      console.error(error);
+
+      alert("Something went wrong");
+
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+
+
+
+
   function logout() {
     localStorage.removeItem("user");
 
@@ -71,6 +206,13 @@ export default function HistoryPage() {
 
           <button className="active">
             History
+          </button>
+           <button
+            onClick={() =>
+              router.push("/analytics")
+            }
+          >
+            Analytics
           </button>
 
         </nav>
@@ -166,6 +308,7 @@ export default function HistoryPage() {
                     <th>Count</th>
                     <th>Date</th>
                     <th>Time</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
 
@@ -173,42 +316,111 @@ export default function HistoryPage() {
 
                   {history.map((item, index) => {
 
-                    const date =
-                      new Date(item.date);
+    const date = new Date(item.date);
 
-                    return (
-                      <tr key={item.id}>
+    const isEditing =
+      editingId === item.id;
 
-                        <td>
-                          {index + 1}
-                        </td>
+    return (
+      <tr key={item.id}>
 
-                        <td>
-                          <span className="count">
-                            {item.count}
-                          </span>
-                        </td>
+        <td>
+          {index + 1}
+        </td>
 
-                        <td>
-                          {date.toLocaleDateString(
-                            "en-IN"
-                          )}
-                        </td>
+        <td>
 
-                        <td>
-                          {date.toLocaleTimeString(
-                            "en-IN",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            }
-                          )}
-                        </td>
+          {isEditing ? (
 
-                      </tr>
-                    );
-                  })}
+            <input
+              type="number"
+              min="0"
+              value={editCount}
+              onChange={(e) =>
+                setEditCount(e.target.value)
+              }
+              className="edit-input"
+            />
+
+          ) : (
+
+            <span className="count">
+              {item.count}
+            </span>
+
+          )}
+
+        </td>
+
+        <td>
+          {date.toLocaleDateString("en-IN")}
+        </td>
+
+        <td>
+          {date.toLocaleTimeString(
+            "en-IN",
+            {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            }
+          )}
+        </td>
+
+        <td>
+
+          <div className="action-buttons">
+
+            {isEditing ? (
+              <>
+                <button
+                  className="save-btn"
+                  disabled={actionLoading}
+                  onClick={() =>
+                    updateCount(item.id)
+                  }
+                >
+                  Save
+                </button>
+
+                <button
+                  className="cancel-btn"
+                  disabled={actionLoading}
+                  onClick={cancelEdit}
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="edit-btn"
+                  onClick={() =>
+                    startEdit(item)
+                  }
+                >
+                  Edit
+                </button>
+
+                <button
+                  className="delete-btn"
+                  disabled={actionLoading}
+                  onClick={() =>
+                    deleteCount(item.id)
+                  }
+                >
+                  Delete
+                </button>
+              </>
+            )}
+
+          </div>
+
+        </td>
+
+      </tr>
+    );
+  })}
 
                 </tbody>
 
@@ -599,7 +811,98 @@ export default function HistoryPage() {
           }
 
         }
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
+.action-buttons button {
+  padding: 8px 13px;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.edit-btn {
+  background: #eff6ff;
+
+  color: #2563eb;
+}
+
+.edit-btn:hover {
+  background: #dbeafe;
+}
+
+.delete-btn {
+  background: #fef2f2;
+
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #fee2e2;
+}
+
+.save-btn {
+  background: #dcfce7;
+
+  color: #15803d;
+}
+
+.save-btn:hover {
+  background: #bbf7d0;
+}
+
+.cancel-btn {
+  background: #f1f5f9;
+
+  color: #475569;
+}
+
+.cancel-btn:hover {
+  background: #e2e8f0;
+}
+
+.action-buttons button:disabled {
+  opacity: 0.55;
+
+  cursor: not-allowed;
+}
+
+.edit-input {
+  width: 110px;
+
+  height: 38px;
+
+  padding: 0 10px;
+
+  border: 1px solid #cbd5e1;
+
+  border-radius: 8px;
+
+  outline: none;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  color: #0f172a;
+}
+
+.edit-input:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(37, 99, 235, 0.08);
+}
       `}</style>
 
     </main>

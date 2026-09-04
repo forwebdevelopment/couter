@@ -170,17 +170,23 @@ export default function DashboardPage() {
         </div>
         <div className="dashboard-nav">
 
-  <button className="active">
-    Dashboard
-  </button>
+          <button className="active">
+            Dashboard
+          </button>
 
-  <button
-    onClick={() => router.push("/history")}
-  >
-    History
-  </button>
-
-</div>
+          <button
+            onClick={() => router.push("/history")}
+          >
+            History
+          </button>
+          <button
+            onClick={() =>
+              router.push("/analytics")
+            }
+          >
+            Analytics
+          </button>
+        </div>
 
         <div className="user-area">
 
@@ -217,7 +223,7 @@ export default function DashboardPage() {
 
           {/* COUNTER */}
 
-          <div className="counter-card">
+          <div className="counter-card" onClick={increaseCount}>
 
             <span className="label">
               CURRENT COUNT
@@ -238,7 +244,7 @@ export default function DashboardPage() {
 
               <button
                 className="counter-button plus"
-                onClick={increaseCount}
+              // onClick={increaseCount}
               >
                 +
               </button>
