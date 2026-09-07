@@ -1,5 +1,5 @@
 "use client";
-import Navbar from "../../components/Navbar";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import useVoiceCounter from "../../hooks/useVoiceCounter";
