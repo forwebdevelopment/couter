@@ -190,7 +190,7 @@ export default function HistoryPage() {
   return (
     <main className="history-page">
 
-      <header className="topbar">
+      {/* <header className="topbar">
 
         <div className="brand">
           Counter App
@@ -232,7 +232,7 @@ export default function HistoryPage() {
 
         </div>
 
-      </header>
+      </header> */}
 
 
       <section className="content">

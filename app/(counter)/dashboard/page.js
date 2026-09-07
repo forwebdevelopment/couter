@@ -1,8 +1,8 @@
 "use client";
-
+import Navbar from "../../components/Navbar";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import useVoiceCounter from "../hooks/useVoiceCounter";
+import useVoiceCounter from "../../hooks/useVoiceCounter";
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -27,7 +27,7 @@ export default function DashboardPage() {
   startListening,
   stopListening,
 } = useVoiceCounter({
-  targetWords: ["ram", "राम"],
+  targetWords: ["ram", "राम" , "radha" , "राधा", "shree harivansh" , "श्री हरिवंश"],
 
   language: "hi-IN",
 
@@ -166,11 +166,11 @@ export default function DashboardPage() {
     setMessage("");
   }
 
-  function logout() {
-    localStorage.removeItem("user");
+  // function logout() {
+  //   localStorage.removeItem("user");
 
-    router.push("/login");
-  }
+  //   router.push("/login");
+  // }
 
   const hasChanges =
     Number(count) !== Number(savedCount);
@@ -186,7 +186,7 @@ export default function DashboardPage() {
   return (
     <main className="dashboard">
 
-      <header className="topbar">
+      {/* <header className="topbar">
 
         <div className="logo">
           Counter App
@@ -223,7 +223,9 @@ export default function DashboardPage() {
 
         </div>
 
-      </header>
+      </header> */}
+
+      {/* <Navbar/> */}
 
       <section className="content">
 

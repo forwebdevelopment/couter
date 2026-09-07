@@ -1,0 +1,169 @@
+/* =====================================================
+   COUNTER NAVBAR
+===================================================== */
+
+.counter-navbar {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #dbe5f1;
+  box-sizing: border-box;
+}
+
+.counter-navbar-inner {
+  max-width: 1400px;
+  min-height: 75px;
+  margin: 0 auto;
+  padding: 0 38px;
+
+  display: flex;
+  align-items: center;
+
+  box-sizing: border-box;
+}
+
+/* =====================================================
+   LOGO
+===================================================== */
+
+.counter-logo {
+  color: #2554c7;
+  font-size: 22px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* =====================================================
+   NAVIGATION
+===================================================== */
+
+.counter-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin-left: 30px;
+}
+
+.counter-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 44px;
+  padding: 0 15px;
+
+  color: #475569;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+
+  border-radius: 11px;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.counter-nav-link:hover {
+  background: #f1f5f9;
+  color: #2554c7;
+}
+
+.counter-nav-link.active {
+  background: #eff6ff;
+  color: #2554c7;
+}
+
+/* =====================================================
+   USER SECTION
+===================================================== */
+
+.counter-nav-user {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  margin-left: auto;
+}
+
+.counter-user-name {
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.counter-logout-btn {
+  min-height: 44px;
+  padding: 0 16px;
+
+  background: #ffffff;
+  color: #0f172a;
+
+  border: 1px solid #dbe5f1;
+  border-radius: 11px;
+
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.counter-logout-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+
+  .counter-navbar-inner {
+    min-height: auto;
+    padding: 14px 16px;
+
+    flex-wrap: wrap;
+    row-gap: 14px;
+  }
+
+  .counter-logo {
+    font-size: 20px;
+  }
+
+  .counter-nav-user {
+    gap: 10px;
+  }
+
+  .counter-user-name {
+    font-size: 13px;
+  }
+
+  .counter-logout-btn {
+    min-height: 38px;
+    padding: 0 12px;
+  }
+
+  .counter-nav-links {
+    order: 3;
+
+    width: 100%;
+    margin-left: 0;
+
+    gap: 6px;
+  }
+
+  .counter-nav-link {
+    flex: 1;
+    min-height: 40px;
+    padding: 0 8px;
+
+    font-size: 14px;
+  }
+}

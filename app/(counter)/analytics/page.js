@@ -339,59 +339,7 @@ export default function AnalyticsPage() {
   return (
     <main className="analytics-page">
 
-      <header className="topbar">
-
-        <div className="brand">
-          Counter App
-        </div>
-
-        <nav>
-
-          <button
-            onClick={() =>
-              router.push(
-                "/dashboard"
-              )
-            }
-          >
-            Dashboard
-          </button>
-
-          <button
-            onClick={() =>
-              router.push(
-                "/history"
-              )
-            }
-          >
-            History
-          </button>
-
-          <button
-            className="active"
-          >
-            Analytics
-          </button>
-
-        </nav>
-
-        <div className="user-area">
-
-          <span>
-            {user?.name}
-          </span>
-
-          <button
-            className="logout"
-            onClick={logout}
-          >
-            Logout
-          </button>
-
-        </div>
-
-      </header>
-
+      
 
       <section className="content">
 

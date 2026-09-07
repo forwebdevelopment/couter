@@ -53,7 +53,7 @@ export default function LoginPage() {
 
       setTimeout(() => {
         router.push("/dashboard");
-      }, 700);
+      }, 200);
 
     } catch (error) {
       setMessage("Something went wrong");
