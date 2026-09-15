@@ -1,169 +1,518 @@
-/* =====================================================
-   COUNTER NAVBAR
-===================================================== */
+/* ==========================================
+   NAVBAR
+========================================== */
 
 .counter-navbar {
   width: 100%;
+
   background: #ffffff;
-  border-bottom: 1px solid #dbe5f1;
-  box-sizing: border-box;
+
+  border-bottom: 1px solid #e2e8f0;
+
+  position: sticky;
+
+  top: 0;
+
+  z-index: 1000;
 }
+
+
+/* ==========================================
+   INNER
+========================================== */
 
 .counter-navbar-inner {
+  width: 100%;
+
   max-width: 1400px;
-  min-height: 75px;
+
+  min-height: 72px;
+
   margin: 0 auto;
-  padding: 0 38px;
+
+  padding: 0 28px;
 
   display: flex;
+
   align-items: center;
 
-  box-sizing: border-box;
+  gap: 30px;
 }
 
-/* =====================================================
+
+/* ==========================================
    LOGO
-===================================================== */
+========================================== */
 
 .counter-logo {
-  color: #2554c7;
-  font-size: 22px;
+  color: #2563eb;
+
+  font-size: 21px;
+
   font-weight: 800;
+
   text-decoration: none;
+
   white-space: nowrap;
 }
 
-/* =====================================================
-   NAVIGATION
-===================================================== */
+
+/* ==========================================
+   DESKTOP NAVIGATION
+========================================== */
 
 .counter-nav-links {
   display: flex;
-  align-items: center;
-  gap: 8px;
 
-  margin-left: 30px;
+  align-items: center;
+
+  gap: 6px;
 }
+
 
 .counter-nav-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 10px 13px;
 
-  min-height: 44px;
-  padding: 0 15px;
+  border-radius: 8px;
 
-  color: #475569;
-  font-size: 16px;
+  color: #64748b;
+
+  font-size: 14px;
+
   font-weight: 600;
+
   text-decoration: none;
 
-  border-radius: 11px;
-
-  transition:
-    background 0.2s ease,
-    color 0.2s ease;
+  transition: all 0.2s ease;
 }
+
 
 .counter-nav-link:hover {
   background: #f1f5f9;
-  color: #2554c7;
+
+  color: #0f172a;
 }
+
 
 .counter-nav-link.active {
   background: #eff6ff;
-  color: #2554c7;
+
+  color: #2563eb;
 }
 
-/* =====================================================
+
+/* ==========================================
    USER SECTION
-===================================================== */
+========================================== */
 
 .counter-nav-user {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-
   margin-left: auto;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 14px;
 }
+
 
 .counter-user-name {
-  color: #0f172a;
+  color: #334155;
+
   font-size: 14px;
+
   font-weight: 600;
-  white-space: nowrap;
 }
 
+
 .counter-logout-btn {
-  min-height: 44px;
-  padding: 0 16px;
+  padding: 9px 15px;
 
-  background: #ffffff;
-  color: #0f172a;
+  border: 1px solid #e2e8f0;
 
-  border: 1px solid #dbe5f1;
-  border-radius: 11px;
+  border-radius: 8px;
 
-  font-size: 14px;
-  font-weight: 500;
+  background: white;
+
+  color: #475569;
+
+  font-size: 13px;
+
+  font-weight: 700;
 
   cursor: pointer;
 
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
+  transition: 0.2s;
 }
+
 
 .counter-logout-btn:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #fef2f2;
+
+  border-color: #fecaca;
+
+  color: #dc2626;
 }
 
-/* =====================================================
-   MOBILE
-===================================================== */
 
-@media (max-width: 768px) {
+/* ==========================================
+   HAMBURGER
+========================================== */
+
+.counter-menu-toggle {
+  display: none;
+
+  width: 42px;
+
+  height: 42px;
+
+  margin-left: auto;
+
+  padding: 9px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: transparent;
+
+  cursor: pointer;
+}
+
+
+.counter-menu-toggle:hover {
+  background: #f1f5f9;
+}
+
+
+.counter-menu-toggle span {
+  display: block;
+
+  width: 23px;
+
+  height: 2px;
+
+  margin: 5px auto;
+
+  border-radius: 4px;
+
+  background: #334155;
+
+  transition: all 0.25s ease;
+}
+
+
+/* Hamburger → X */
+
+.counter-menu-toggle.open span:nth-child(1) {
+  transform:
+    translateY(7px)
+    rotate(45deg);
+}
+
+
+.counter-menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+
+
+.counter-menu-toggle.open span:nth-child(3) {
+  transform:
+    translateY(-7px)
+    rotate(-45deg);
+}
+
+
+/* ==========================================
+   MOBILE MENU
+========================================== */
+
+.counter-mobile-menu {
+  display: none;
+}
+
+
+/* ==========================================
+   TABLET
+========================================== */
+
+@media (max-width: 950px) {
 
   .counter-navbar-inner {
-    min-height: auto;
-    padding: 14px 16px;
-
-    flex-wrap: wrap;
-    row-gap: 14px;
+    padding: 0 20px;
   }
 
-  .counter-logo {
-    font-size: 20px;
+
+  .counter-nav-links {
+    gap: 2px;
   }
 
-  .counter-nav-user {
-    gap: 10px;
-  }
 
-  .counter-user-name {
+  .counter-nav-link {
+    padding:
+      9px 9px;
+
     font-size: 13px;
   }
 
-  .counter-logout-btn {
-    min-height: 38px;
-    padding: 0 12px;
+
+  .counter-user-name {
+    display: none;
   }
+
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 760px) {
+
+  .counter-navbar-inner {
+    min-height: 64px;
+
+    padding:
+      0 18px;
+  }
+
+
+  /* Hide desktop navigation */
 
   .counter-nav-links {
-    order: 3;
-
-    width: 100%;
-    margin-left: 0;
-
-    gap: 6px;
+    display: none;
   }
 
-  .counter-nav-link {
-    flex: 1;
-    min-height: 40px;
-    padding: 0 8px;
+
+  .counter-nav-user {
+    display: none;
+  }
+
+
+  /* Show hamburger */
+
+  .counter-menu-toggle {
+    display: block;
+  }
+
+
+  /* Mobile drawer */
+
+  .counter-mobile-menu {
+    display: block;
+
+    position: absolute;
+
+    top: 64px;
+
+    left: 0;
+
+    width: 100%;
+
+    max-height: 0;
+
+    overflow: hidden;
+
+    opacity: 0;
+
+    background: #ffffff;
+
+    border-bottom:
+      1px solid #e2e8f0;
+
+    box-shadow:
+      0 12px 25px
+      rgba(
+        15,
+        23,
+        42,
+        0.08
+      );
+
+    transform:
+      translateY(-10px);
+
+    transition:
+      max-height 0.3s ease,
+      opacity 0.25s ease,
+      transform 0.25s ease;
+  }
+
+
+  .counter-mobile-menu.show {
+    max-height: 600px;
+
+    opacity: 1;
+
+    transform:
+      translateY(0);
+  }
+
+
+  /* ========================================
+     MOBILE USER
+  ======================================== */
+
+  .counter-mobile-user {
+    padding:
+      18px 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    border-bottom:
+      1px solid #f1f5f9;
+  }
+
+
+  .counter-mobile-avatar {
+    width: 42px;
+
+    height: 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    font-size: 17px;
+
+    font-weight: 800;
+  }
+
+
+  .counter-mobile-user div:last-child {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+  }
+
+
+  .counter-mobile-user-label {
+    color: #94a3b8;
+
+    font-size: 11px;
+  }
+
+
+  .counter-mobile-user strong {
+    color: #334155;
 
     font-size: 14px;
   }
+
+
+  /* ========================================
+     MOBILE LINKS
+  ======================================== */
+
+  .counter-mobile-links {
+    display: flex;
+
+    flex-direction: column;
+
+    padding: 10px;
+  }
+
+
+  .counter-mobile-link {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding:
+      13px 14px;
+
+    border-radius: 9px;
+
+    color: #475569;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    text-decoration: none;
+
+    transition: 0.2s;
+  }
+
+
+  .counter-mobile-link span {
+    width: 24px;
+
+    color: #64748b;
+
+    font-size: 18px;
+
+    text-align: center;
+  }
+
+
+  .counter-mobile-link:hover {
+    background: #f8fafc;
+
+    color: #2563eb;
+  }
+
+
+  .counter-mobile-link.active {
+    background: #eff6ff;
+
+    color: #2563eb;
+  }
+
+
+  .counter-mobile-link.active span {
+    color: #2563eb;
+  }
+
+
+  /* ========================================
+     MOBILE LOGOUT
+  ======================================== */
+
+  .counter-mobile-logout {
+    width:
+      calc(100% - 40px);
+
+    margin:
+      5px 20px 20px;
+
+    padding: 12px;
+
+    border:
+      1px solid #fecaca;
+
+    border-radius: 9px;
+
+    background: #fef2f2;
+
+    color: #dc2626;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+  }
+
+
+  .counter-mobile-logout:hover {
+    background: #fee2e2;
+  }
+
 }
