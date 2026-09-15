@@ -1,26 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import "./Navbar.css";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import "./Navbar.css";
 
 export default function Navbar() {
   const pathname = usePathname();
-    const router = useRouter();
-  const [user , setUser] = useState<any>("Test")
- const userdata = localStorage.getItem("user")
- 
+  const router = useRouter();
 
+  const [user, setUser] = useState<any>(null);
 
- useEffect(()=>{
- if(userdata){
-   const data =   JSON.parse(userdata)
-    setUser(data)
- }
- },[])
+  useEffect(() => {
+    const userdata = localStorage.getItem("user");
 
+    if (userdata) {
+      try {
+        const data = JSON.parse(userdata);
+        setUser(data);
+      } catch (error) {
+        console.error("Invalid user data:", error);
+      }
+    }
+  }, []);
 
   const menus = [
     { name: "Dashboard", href: "/dashboard" },
@@ -28,14 +30,11 @@ export default function Navbar() {
     { name: "Analytics", href: "/analytics" },
   ];
 
-
- function logout() {
+  function logout() {
     localStorage.removeItem("user");
-
-   router.push("/login");
+    setUser(null);
+    router.push("/login");
   }
-
-
 
   return (
     <header className="counter-navbar">
@@ -64,10 +63,13 @@ export default function Navbar() {
         {/* User */}
         <div className="counter-nav-user">
           <span className="counter-user-name">
-            {user.name}
+            {user?.name || "User"}
           </span>
 
-          <button className="counter-logout-btn" onClick={logout}>
+          <button
+            className="counter-logout-btn"
+            onClick={logout}
+          >
             Logout
           </button>
         </div>

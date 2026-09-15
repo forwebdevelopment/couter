@@ -4,7 +4,25 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
 
+    // ----------------------------------
+    // Query parameters
+    // ----------------------------------
+
     const userId = searchParams.get("userId");
+
+    const page = Math.max(
+      1,
+      Number(searchParams.get("page")) || 1
+    );
+
+    const limit = Math.max(
+      1,
+      Number(searchParams.get("limit")) || 5
+    );
+
+    // ----------------------------------
+    // Validation
+    // ----------------------------------
 
     if (!userId) {
       return Response.json(
@@ -12,44 +30,97 @@ export async function GET(request) {
           success: false,
           message: "UserId is required",
         },
-        { status: 400 }
+        {
+          status: 400,
+        }
       );
     }
+
+    // ----------------------------------
+    // Calculate OFFSET
+    // ----------------------------------
+
+    const offset = (page - 1) * limit;
+
+    // ----------------------------------
+    // Total records
+    // ----------------------------------
+
+    const countResult = await pool.query(
+      `
+      SELECT COUNT(*) AS total
+      FROM counthistory
+      WHERE userid = $1
+      `,
+      [userId]
+    );
+
+    const totalRecords = Number(
+      countResult.rows[0].total
+    );
+
+    const totalPages = Math.max(
+      1,
+      Math.ceil(totalRecords / limit)
+    );
+
+    // ----------------------------------
+    // Fetch current page
+    // ----------------------------------
 
     const result = await pool.query(
       `
       SELECT
         id,
-        userid,
         count,
-        dates
+        dates AS "date"
       FROM counthistory
       WHERE userid = $1
       ORDER BY dates DESC
+      LIMIT $2
+      OFFSET $3
       `,
-      [userId]
+      [
+        userId,
+        limit,
+        offset,
+      ]
     );
+
+    // ----------------------------------
+    // Response
+    // ----------------------------------
 
     return Response.json({
       success: true,
-      data: result.rows.map((row) => ({
-        id: row.id,
-        userId: row.userid,
-        count: Number(row.count),
-        date: row.dates,
-      })),
+
+      data: result.rows,
+
+      pagination: {
+        page,
+        limit,
+        totalRecords,
+        totalPages,
+      },
     });
 
   } catch (error) {
-    console.error("Count History Error:", error);
+
+    console.error(
+      "COUNT HISTORY GET ERROR:",
+      error
+    );
 
     return Response.json(
       {
         success: false,
-        message: "Unable to load count history",
-        error: error?.message || "Unknown error",
+        message:
+          error.message ||
+          "Unable to fetch history",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }
