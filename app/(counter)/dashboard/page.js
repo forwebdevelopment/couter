@@ -252,6 +252,7 @@ export default function DashboardPage() {
 
             <span className="label">
               CURRENT COUNT
+                  राधा
             </span>
 
             <div className="counter-number">
