@@ -251,8 +251,10 @@ export default function DashboardPage() {
           <div className="counter-card" onClick={increaseCount}>
 
             <span className="label">
-              CURRENT COUNT
+              CURRENT COUNT <br/>
+                  <strong style={{color:'blue'}}>
                   राधा
+                  </strong>
             </span>
 
             <div className="counter-number">
