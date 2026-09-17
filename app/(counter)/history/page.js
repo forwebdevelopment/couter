@@ -620,9 +620,9 @@ export default function HistoryPage() {
                         Date
                       </th>
 
-                      <th>
+                      {/* <th>
                         Time
-                      </th>
+                      </th> */}
 
                       <th>
                         Actions
@@ -743,7 +743,7 @@ export default function HistoryPage() {
 
                             {/* TIME */}
 
-                            <td>
+                            {/* <td>
 
                               {date.toLocaleTimeString(
             "en-IN",
@@ -754,7 +754,7 @@ export default function HistoryPage() {
             }
           )}
 
-                            </td>
+                            </td> */}
 
 
                             {/* ACTIONS */}

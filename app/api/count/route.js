@@ -30,12 +30,13 @@ export async function POST(request) {
       );
     }
 
+
     const result = await pool.query(
       `
       INSERT INTO counthistory
         (userid, count)
-      VALUES
-        ($1, $2)
+      VALUES($1, $2) ON CONFLICT(userid , dates)
+      DO UPDATE SET count = EXCLUDED.count
       RETURNING id, userid, count, dates
       `,
       [userId, numericCount]
@@ -85,11 +86,11 @@ export async function GET(request) {
       `
       SELECT count, dates
       FROM counthistory
-      WHERE userid = $1
+      WHERE userid = $1 and dates = $2
       ORDER BY dates DESC
       LIMIT 1
       `,
-      [userId]
+      [userId , new Date()]
     );
 
     if (result.rows.length === 0) {

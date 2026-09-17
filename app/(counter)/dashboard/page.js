@@ -166,11 +166,7 @@ export default function DashboardPage() {
     setMessage("");
   }
 
-  // function logout() {
-  //   localStorage.removeItem("user");
 
-  //   router.push("/login");
-  // }
 
   const hasChanges =
     Number(count) !== Number(savedCount);
@@ -185,47 +181,6 @@ export default function DashboardPage() {
 
   return (
     <main className="dashboard">
-
-      {/* <header className="topbar">
-
-        <div className="logo">
-          Counter App
-        </div>
-        <div className="dashboard-nav">
-
-          <button className="active">
-            Dashboard
-          </button>
-
-          <button
-            onClick={() => router.push("/history")}
-          >
-            History
-          </button>
-          <button
-            onClick={() =>
-              router.push("/analytics")
-            }
-          >
-            Analytics
-          </button>
-        </div>
-
-        <div className="user-area">
-
-          <span>
-            {user?.name}
-          </span>
-
-          <button onClick={logout}>
-            Logout
-          </button>
-
-        </div>
-
-      </header> */}
-
-      {/* <Navbar/> */}
 
       <section className="content">
 
