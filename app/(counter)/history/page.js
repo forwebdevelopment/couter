@@ -735,7 +735,7 @@ export default function HistoryPage() {
 
                             <td>
 
-                               {date.toLocaleDateString("en-IN")}
+                              {date.toLocaleDateString("en-IN")}
 
 
                             </td>

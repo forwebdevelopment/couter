@@ -19,25 +19,26 @@ export default function DashboardPage() {
   const [message, setMessage] = useState("");
 
 
-  const {
+const {
   supported,
   isListening,
+  isSpeaking,
   lastSpokenWord,
   voiceMessage,
   startListening,
   stopListening,
 } = useVoiceCounter({
-  targetWords: ["ram", "राम" , "radha" , "राधा", "shree harivansh" , "श्री हरिवंश"],
-
+  targetWords: [
+    "ram",
+    "राम",
+    "radha",
+    "राधा",
+    "shree harivansh",
+    "श्री हरिवंश",
+  ],
   language: "hi-IN",
-
   onCountIncrease: (amount) => {
-    setCount(
-      (previous) =>
-        Number(previous || 0) +
-        amount
-    );
-
+    setCount((previous) => Number(previous || 0) + amount);
     setMessage("");
   },
 });
@@ -333,84 +334,87 @@ export default function DashboardPage() {
         </div>
 
 
-        <div className="voice-card">
+     <div className="voice-card">
+  <div className="voice-card-top">
+    <div className="voice-card-header">
+      <div className="voice-icon">🎤</div>
 
-  <div className="voice-card-header">
-    <div className="voice-icon">
-      🎤
+      <div>
+        <span className="voice-label">VOICE COUNTER</span>
+        <h2>Count by speaking</h2>
+      </div>
     </div>
 
-    <div>
-      <span className="voice-label">
-        VOICE COUNTER
+    <label className="voice-switch">
+      <input
+        type="checkbox"
+        checked={isListening}
+        disabled={!supported}
+        onChange={(event) => {
+          if (event.target.checked) {
+            startListening();
+          } else {
+            stopListening();
+          }
+        }}
+        aria-label="Enable voice counter"
+      />
+      <span className="voice-switch-track" />
+      <span className="voice-switch-text">
+        {isListening ? "On" : "Off"}
       </span>
+    </label>
+  </div>
 
-      <h2>
-        Count by speaking
-      </h2>
-    </div>
+  <div
+    className={`voice-waveform ${
+      isSpeaking ? "voice-waveform-active" : ""
+    }`}
+    role="img"
+    aria-label={
+      isSpeaking ? "Speech detected" : "Waiting for speech"
+    }
+  >
+    {Array.from({ length: 17 }, (_, index) => (
+      <span key={index} />
+    ))}
   </div>
 
   <p className="voice-description">
-    Say <strong>Ram</strong> to increase the count.
-    Every detected word updates the count locally.
+    Say <strong>Ram</strong>, <strong>Radha</strong>, or{" "}
+    <strong>Shree Harivansh</strong> to increase the count.
+    When enabled, the counter keeps listening.
   </p>
 
   <div className="voice-info-grid">
-
     <div className="voice-info-box">
       <span>Status</span>
-
       <strong>
-        {isListening
-          ? "Listening..."
-          : "Stopped"}
+        {isSpeaking
+          ? "Speech detected"
+          : isListening
+            ? "Listening..."
+            : "Stopped"}
       </strong>
     </div>
 
     <div className="voice-info-box">
       <span>Last detected</span>
-
-      <strong>
-        {lastSpokenWord || "—"}
-      </strong>
+      <strong>{lastSpokenWord || "—"}</strong>
     </div>
-
   </div>
 
-  {!supported ? (
-
+  {!supported && (
     <div className="voice-error">
-      Voice recognition is not supported
-      in this browser.
+      Voice recognition is not supported in this browser.
     </div>
-
-  ) : !isListening ? (
-
-    <button
-      className="start-voice-btn"
-      onClick={startListening}
-    >
-      🎤 Start Voice Counter
-    </button>
-
-  ) : (
-
-    <button
-      className="stop-voice-btn"
-      onClick={stopListening}
-    >
-      Stop Voice Counter
-    </button>
-
   )}
 
-  {voiceMessage && (
-    <div className="voice-message">
+  {voiceMessage && supported && (
+    <div className="voice-message" role="status">
       {voiceMessage}
     </div>
   )}
-
 </div>
 
       </section>
@@ -970,42 +974,9 @@ export default function DashboardPage() {
   font-size: 16px;
 }
 
-.start-voice-btn,
-.stop-voice-btn {
-  width: 100%;
 
-  height: 52px;
 
-  border: none;
 
-  border-radius: 12px;
-
-  color: #ffffff;
-
-  font-size: 15px;
-
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition: 0.2s;
-}
-
-.start-voice-btn {
-  background: #2563eb;
-}
-
-.start-voice-btn:hover {
-  background: #1d4ed8;
-}
-
-.stop-voice-btn {
-  background: #dc2626;
-}
-
-.stop-voice-btn:hover {
-  background: #b91c1c;
-}
 
 .voice-message {
   margin-top: 14px;
@@ -1035,6 +1006,147 @@ export default function DashboardPage() {
   font-size: 14px;
 
   border: 1px solid #fecaca;
+}
+  .voice-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.voice-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.voice-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.voice-switch-track {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  flex: none;
+  border-radius: 99px;
+  background: #cbd5e1;
+  transition: background 0.2s;
+}
+
+.voice-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s;
+}
+
+.voice-switch input:checked + .voice-switch-track {
+  background: #2563eb;
+}
+
+.voice-switch input:checked + .voice-switch-track::after {
+  transform: translateX(20px);
+}
+
+.voice-switch input:focus-visible + .voice-switch-track {
+  outline: 3px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.voice-switch input:disabled + .voice-switch-track {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.voice-switch-text {
+  min-width: 24px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.voice-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 38px;
+  margin: 8px auto 0;
+}
+
+.voice-waveform span {
+  width: 3px;
+  height: 7px;
+  border-radius: 99px;
+  background: #bfdbfe;
+}
+
+.voice-waveform span:nth-child(3n + 1) {
+  height: 13px;
+}
+
+.voice-waveform span:nth-child(4n + 2) {
+  height: 21px;
+}
+
+.voice-waveform span:nth-child(5n + 3) {
+  height: 29px;
+}
+
+.voice-waveform-active span {
+  background: #2563eb;
+  animation: voice-wave 0.7s ease-in-out infinite alternate;
+  animation-delay: calc(var(--wave-index, 0) * 55ms);
+}
+
+.voice-waveform-active span:nth-child(3n + 1) {
+  animation-delay: 100ms;
+}
+
+.voice-waveform-active span:nth-child(3n + 2) {
+  animation-delay: 240ms;
+}
+
+.voice-waveform-active span:nth-child(3n) {
+  animation-delay: 380ms;
+}
+
+@keyframes voice-wave {
+  from {
+    transform: scaleY(0.4);
+  }
+
+  to {
+    transform: scaleY(1.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-waveform-active span {
+    animation: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .voice-card-top {
+    align-items: center;
+  }
+
+  .voice-card-header h2 {
+    font-size: 19px;
+  }
 }
 
 @media(max-width: 600px) {
