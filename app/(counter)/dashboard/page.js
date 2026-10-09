@@ -208,37 +208,37 @@ const {
 
             <span className="label">
               CURRENT COUNT <br/>
-                  <strong style={{color:'blue'}}>
+                  <strong style={ {color:'blue'}}>
                   राधा
                   </strong>
             </span>
 
-            <div className="counter-number">
+            {/* <div className="counter-number">
               {count === "" ? 0 : count}
-            </div>
+            </div> */}
 
             <div className="counter-actions">
-
+{/* 
               <button
                 className="counter-button minus"
                 onClick={decreaseCount}
               >
                 −
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 className="counter-button plus"
               // onClick={increaseCount}
               >
                 +
-              </button>
+              </button> */}
 
             </div>
 
-            <p className="helper">
+            {/* <p className="helper">
               These buttons update the count only
               in the browser. No API request is made.
-            </p>
+            </p> */}
 
           </div>
 
@@ -584,7 +584,7 @@ const {
 
           border: none;
 
-          border-radius: 12px;
+          border-radius: 50px;
 
           font-size: 30px;
           font-weight: 500;
@@ -600,7 +600,7 @@ const {
 
         .plus {
           background: #2563eb;
-
+          
           color: white;
         }
 
