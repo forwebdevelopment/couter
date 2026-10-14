@@ -1,0 +1,164 @@
+
+.card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-top: 3px solid var(--habit-color);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+  transition: box-shadow 160ms ease, transform 160ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgb(15 23 42 / 7%);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--habit-color) 12%, white);
+  color: var(--habit-color);
+  font-size: 22px;
+}
+
+.status {
+  padding: 5px 9px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.paused {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.completed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.archived {
+  background: #e2e8f0;
+  color: #475569;
+}
+
+.name {
+  margin: 18px 0 7px;
+  color: #172033;
+  font-size: 18px;
+  overflow-wrap: anywhere;
+}
+
+.description {
+  min-height: 42px;
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 18px 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.category {
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.target {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #eef2f7;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.target strong {
+  color: #172033;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.completeButton,
+.secondaryButton {
+  border-radius: 8px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.completeButton {
+  flex: 1;
+  border: 1px solid #2563eb;
+  background: #2563eb;
+  color: #fff;
+}
+
+.completeButton:hover {
+  background: #1d4ed8;
+}
+
+.secondaryButton {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+}
+
+.secondaryButton:hover {
+  background: #f8fafc;
+}
+.completedButton {
+  flex: 1;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  background: #f0fdf4;
+  color: #166534;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: not-allowed;
+}

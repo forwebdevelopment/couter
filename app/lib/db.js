@@ -14,4 +14,3 @@ const pool = new Pool({
 
 export default pool;
 
-//Host=cheeky-sponge-25403.j77.aws-ap-south-1.cockroachlabs.cloud;Port=26257;Database=codeinsights;Username=forwebdevelopment;Password=xQNyPh1ZdZFvMBt8tfPQHw;SslMode=Require;Trust Server Certificate=true

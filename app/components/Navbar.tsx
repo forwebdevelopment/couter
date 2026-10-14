@@ -61,7 +61,12 @@ export default function Navbar() {
       name: "Time Management",
       href: "/time-management",
     },
+    {
+      name:'Habit Maker',
+      href:'/habits'
+    }
   ];
+
 
   // =========================================
   // Logout
