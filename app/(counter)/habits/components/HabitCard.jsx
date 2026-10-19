@@ -2,18 +2,20 @@
 "use client";
 
 import styles from "./HabitCard.module.css";
-
+import { useRouter } from "next/navigation";
 export default function HabitCard({
   habit,
   categories,
+  streak,
   onCheckIn,
   onChangeStatus,
 }) {
   const category = categories.find(
     (item) => String(item.id) === String(habit.category_id)
   );
-
+  const router = useRouter();
   const isActive = habit.status === "active";
+  const supportsStreak = habit.frequency === "daily";
 
   return (
     <article
@@ -46,6 +48,7 @@ export default function HabitCard({
         <span className={styles.category}>
           {category?.name || "Uncategorized"}
         </span>
+
         <span>
           {habit.frequency === "selected_days"
             ? "Selected days"
@@ -62,44 +65,72 @@ export default function HabitCard({
         </strong>
       </div>
 
-     
-<div className={styles.actions}>
-  {isActive && (
-    <button
-      type="button"
-      className={
-        habit.completed_today
-          ? styles.completedButton
-          : styles.completeButton
-      }
-      disabled={habit.completed_today}
-      onClick={() => onCheckIn(habit)}
-    >
-      {habit.completed_today
-        ? "✓ Completed today"
-        : "✓ Complete today"}
-    </button>
-  )}
+      {/* Streak statistics: currently supported for daily habits */}
+      {supportsStreak && (
+        <div className={styles.streakSection}>
+          <div className={styles.streakItem}>
+            <span>🔥 Current streak</span>
+            <strong>
+              {streak?.current_streak ?? "—"}{" "}
+              {streak ? "days" : ""}
+            </strong>
+          </div>
 
-  {isActive ? (
-    <button
-      type="button"
-      className={styles.secondaryButton}
-      onClick={() => onChangeStatus(habit, "paused")}
-    >
-      Pause
-    </button>
-  ) : habit.status === "paused" ? (
-    <button
-      type="button"
-      className={styles.secondaryButton}
-      onClick={() => onChangeStatus(habit, "active")}
-    >
-      Resume
-    </button>
-  ) : null}
-</div>
+          <div className={styles.streakItem}>
+            <span>🏆 Best streak</span>
+            <strong>
+              {streak?.best_streak ?? "—"}{" "}
+              {streak ? "days" : ""}
+            </strong>
+          </div>
+        </div>
+      )}
 
+      <div className={styles.actions}>
+        {isActive && (
+          <button
+            type="button"
+            className={
+              habit.completed_today
+                ? styles.completedButton
+                : styles.completeButton
+            }
+            disabled={habit.completed_today}
+            onClick={() => onCheckIn(habit)}
+          >
+            {habit.completed_today
+              ? "✓ Completed today"
+              : "✓ Complete today"}
+          </button>
+        )}
+
+        {isActive ? (
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={() => onChangeStatus(habit, "paused")}
+          >
+            Pause
+          </button>
+        ) : habit.status === "paused" ? (
+          <button
+            type="button"
+            className={styles.secondaryButton}
+            onClick={() => onChangeStatus(habit, "active")}
+          >
+            Resume
+          </button>
+        ) : null}
+
+        <button
+          type="button"
+          className={styles.secondaryButton}
+          onClick={() => router.push(`/habits/${habit.id}`)}
+        >
+          View Details
+        </button>
+
+      </div>
     </article>
   );
 }

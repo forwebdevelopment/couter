@@ -138,7 +138,7 @@ export default function HabitForm({
               </option>
               
             ))}
-            <option value='Health'>Health</option>
+            <option value='6fa36411-37b9-41e8-af00-8e3afc1cc212'>Health</option>
           </select>
         </label>
 

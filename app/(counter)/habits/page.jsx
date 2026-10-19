@@ -31,6 +31,53 @@ export default function HabitsPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [streaks, setStreaks] = useState({});
+
+
+const loadStreaks = useCallback(async (habitList) => {
+    const dailyHabits = habitList.filter(
+      (habit) => habit.frequency === "daily"
+    );
+
+    const results = await Promise.all(
+      dailyHabits.map(async (habit) => {
+        try {
+          const response = await fetch(
+            `/api/habits/${habit.id}/streak`,
+            { cache: "no-store" }
+          );
+
+          if (!response.ok) {
+            return [habit.id, null];
+          }
+
+          const data = await response.json();
+          return [habit.id, data];
+        } catch {
+          return [habit.id, null];
+        }
+      })
+    );
+
+    setStreaks((previous) => {
+      const updated = {};
+
+      // Keep streak data for habits that still exist.
+      for (const habit of habitList) {
+        if (previous[habit.id]) {
+          updated[habit.id] = previous[habit.id];
+        }
+      }
+
+      for (const [habitId, data] of results) {
+        if (data) {
+          updated[habitId] = data;
+        }
+      }
+
+      return updated;
+    });
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -55,20 +102,28 @@ export default function HabitsPage() {
         categoryResponse.json(),
       ]);
 
-      setHabits(unwrapList(habitData, "data"));
+      const habitList = unwrapList(habitData, "data");
+
+      setHabits(habitList);
+      await loadStreaks(habitList);
       setCategories(unwrapList(categoryData, "categories"));
     } catch (err) {
       setError(err.message || "Something went wrong.");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [loadStreaks]);
+
+
+  
 
   useEffect(() => {
     loadData();
   }, [loadData]);
 
   const createHabit = async (formData) => {
+    debugger
+    console.log(formData)
     setSaving(true);
     setError("");
     setNotice("");
@@ -97,6 +152,7 @@ export default function HabitsPage() {
   };
 
   const checkIn = async (habit) => {
+    console.log(habit)
     setError("");
     setNotice("");
 
@@ -280,6 +336,7 @@ export default function HabitsPage() {
               key={habit.id}
               habit={habit}
               categories={categories}
+              streak={streaks[habit.id]}
               onCheckIn={checkIn}
               onChangeStatus={changeStatus}
             />

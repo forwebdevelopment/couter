@@ -1,5 +1,5 @@
 
-import  pool  from "../../../../lib/db";
+import pool from "../../../../lib/db";
 
 const schema = "habit_maker";
 
@@ -25,10 +25,18 @@ export async function GET(request, { params }) {
     }
 
     const result = await pool.query(
-      `SELECT *
-       FROM ${schema}.habit_checkins
-       ${filters}
-       ORDER BY checkin_date DESC`,
+      `SELECT
+     id,
+     habit_id,
+     TO_CHAR(checkin_date, 'YYYY-MM-DD') AS checkin_date,
+     completed,
+     progress_value,
+     notes,
+     created_at,
+     updated_at
+   FROM ${schema}.habit_checkins
+   ${filters}
+   ORDER BY checkin_date DESC`,
       values
     );
 
@@ -81,11 +89,17 @@ export async function POST(request, { params }) {
 
     // Validate the habit and its eligible date range.
     const habitResult = await pool.query(
-      `SELECT id, start_date, end_date, status
-       FROM ${schema}.habits
-       WHERE id = $1`,
+      `SELECT
+      id,
+      TO_CHAR(start_date, 'YYYY-MM-DD') AS start_date,
+      TO_CHAR(end_date, 'YYYY-MM-DD') AS end_date,
+      status
+   FROM habit_maker.habits
+   WHERE id = $1`,
       [id]
     );
+
+
 
     if (!habitResult.rowCount) {
       return Response.json(
@@ -96,29 +110,38 @@ export async function POST(request, { params }) {
 
     const habit = habitResult.rows[0];
 
-  
-const normalizeDate = (value) => {
-  
-  if (!value) return null;
-  return String(value).slice(0, 10);
-};
 
-const checkinDate = normalizeDate(checkin_date);
-const startDate = normalizeDate(habit.start_date);
-const endDate = normalizeDate(habit.end_date);
+    const normalizeDate = (value) => {
+      debugger
+      if (!value) return null;
+      return String(value).slice(0, 10);
+    };
 
-if (
-  !checkinDate ||
-  !startDate ||
-  checkinDate < startDate ||
-  (endDate && checkinDate > endDate)
-) {
-  
-  return Response.json(
-    { error: "Check-in date is outside the habit date range." },
-    { status: 400 }
-  );
-}
+    const checkinDate = normalizeDate(checkin_date);
+    const startDate = normalizeDate(habit.start_date);
+    const endDate = normalizeDate(habit.end_date);
+
+    if (
+      !checkinDate ||
+      !startDate ||
+      checkinDate < startDate ||
+      (endDate && checkinDate > endDate)
+    ) {
+      const row = habitResult.rowCount
+      return Response.json(
+        {
+          error: "Check-in date is outside the habit date range.",
+          dates: {
+            checkinDate,
+            startDate,
+            endDate,
+            row,
+            habitResult
+          },
+        },
+        { status: 400 }
+      );
+    }
 
     if (habit.status !== "active") {
       return Response.json(
@@ -150,7 +173,7 @@ if (
   } catch (error) {
     console.error("POST check-in error:", error);
     return Response.json(
-      { error: "Failed to save check-in." },
+      { error: `Failed to save check-in. checkinDate: ${checkinDate} startDate : ${startDate} endDate: ${endDate}` },
       { status: 500 }
     );
   }
