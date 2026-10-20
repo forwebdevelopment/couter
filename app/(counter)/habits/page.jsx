@@ -32,7 +32,7 @@ export default function HabitsPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [streaks, setStreaks] = useState({});
-
+const [checkinHistory, setCheckinHistory] = useState({});
 
 const loadStreaks = useCallback(async (habitList) => {
     const dailyHabits = habitList.filter(
@@ -105,6 +105,31 @@ const loadStreaks = useCallback(async (habitList) => {
       const habitList = unwrapList(habitData, "data");
 
       setHabits(habitList);
+      const historyResults = await Promise.all(
+  habitList
+    .filter((habit) => habit.status === "active")
+    .map(async (habit) => {
+      try {
+        const response = await fetch(
+          `/api/habits/${habit.id}/checkins`,
+          { cache: "no-store" }
+        );
+
+        if (!response.ok) return [habit.id, []];
+
+        const result = await response.json();
+
+        return [
+          habit.id,
+          Array.isArray(result.data) ? result.data : [],
+        ];
+      } catch {
+        return [habit.id, []];
+      }
+    })
+);
+
+setCheckinHistory(Object.fromEntries(historyResults));
       await loadStreaks(habitList);
       setCategories(unwrapList(categoryData, "categories"));
     } catch (err) {
@@ -224,6 +249,122 @@ const loadStreaks = useCallback(async (habitList) => {
   });
 
   const activeCount = habits.filter((habit) => habit.status === "active").length;
+  const pausedCount = habits.filter(
+  (habit) => habit.status === "paused"
+).length;
+const today = getLocalDateString(new Date());
+
+const todayEligibleHabits = habits.filter((habit) =>
+  isHabitEligibleOnDate(habit, today)
+);
+
+const todayCompletedCount = todayEligibleHabits.filter((habit) => {
+  const records = checkinHistory[habit.id] || [];
+
+  return records.some(
+    (record) =>
+      record.checkin_date === today &&
+      record.completed === true
+  );
+}).length;
+
+const todayProgressLabel =
+  `${todayCompletedCount} / ${todayEligibleHabits.length}`;
+
+const weekStart = new Date();
+weekStart.setHours(0, 0, 0, 0);
+weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+
+const weekDates = Array.from({ length: 7 }, (_, index) => {
+  const date = new Date(weekStart);
+  date.setDate(weekStart.getDate() + index);
+  return getLocalDateString(date);
+});
+
+const weeklyEligible = [];
+const weeklyCompleted = [];
+
+for (const habit of habits) {
+  for (const dateString of weekDates) {
+    if (dateString > today) continue;
+
+    if (isHabitEligibleOnDate(habit, dateString)) {
+      weeklyEligible.push({ habitId: habit.id, dateString });
+
+      const records = checkinHistory[habit.id] || [];
+      const completed = records.some(
+        (record) =>
+          record.checkin_date === dateString &&
+          record.completed === true
+      );
+
+      if (completed) {
+        weeklyCompleted.push({ habitId: habit.id, dateString });
+      }
+    }
+  }
+}
+
+const weeklyCompletionRate = weeklyEligible.length
+  ? Math.round(
+      (weeklyCompleted.length / weeklyEligible.length) * 100
+    )
+  : 0;
+
+function getLocalDateString(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getScheduledDays(habit) {
+  if (habit.frequency === "daily") {
+    return [0, 1, 2, 3, 4, 5, 6];
+  }
+
+  if (habit.frequency === "selected_days") {
+    return Array.isArray(habit.schedule_days)
+      ? habit.schedule_days.map(Number)
+      : [];
+  }
+
+  // Weekly frequency is not enough to infer a specific weekday.
+  return [];
+}
+
+function isHabitEligibleOnDate(habit, dateString) {
+  if (habit.status !== "active") return false;
+  if (dateString < String(habit.start_date).slice(0, 10)) return false;
+
+  if (
+    habit.end_date &&
+    dateString > String(habit.end_date).slice(0, 10)
+  ) {
+    return false;
+  }
+
+  const date = new Date(`${dateString}T00:00:00`);
+  const day = date.getDay();
+
+  if (habit.frequency === "weekly") {
+    return true;
+  }
+
+  return getScheduledDays(habit).includes(day);
+}
+
+const completedCount = habits.filter(
+  (habit) => habit.status === "completed"
+).length;
+
+const bestCurrentStreak = Math.max(
+  0,
+  ...Object.values(streaks).map((streak) =>
+    Number(streak?.current_streak ?? streak?.currentStreak ?? 0)
+  )
+);
 
   return (
     <main className={styles.page}>
@@ -244,20 +385,36 @@ const loadStreaks = useCallback(async (habitList) => {
         </button>
       </header>
 
-      <section className={styles.stats}>
-        <div className={styles.statCard}>
-          <span>All habits</span>
-          <strong>{habits.length}</strong>
-        </div>
-        <div className={styles.statCard}>
-          <span>Active habits</span>
-          <strong>{activeCount}</strong>
-        </div>
-        <div className={styles.statCard}>
-          <span>Showing</span>
-          <strong>{visibleHabits.length}</strong>
-        </div>
-      </section>
+    <section className={styles.stats}>
+  <div className={styles.statCard}>
+    <span>Total Habits</span>
+    <strong>{habits.length}</strong>
+  </div>
+
+  <div className={styles.statCard}>
+    <span>Active Habits</span>
+    <strong>{activeCount}</strong>
+  </div>
+
+  <div className={styles.statCard}>
+    <span>Paused Habits</span>
+    <strong>{pausedCount}</strong>
+  </div>
+
+  <div className={styles.statCard}>
+    <span>Best Current Streak</span>
+    <strong>{bestCurrentStreak} days</strong>
+  </div>
+  <div className={styles.statCard}>
+  <span>Today's Progress</span>
+  <strong>{todayProgressLabel}</strong>
+</div>
+
+<div className={styles.statCard}>
+  <span>Weekly Completion</span>
+  <strong>{weeklyCompletionRate}%</strong>
+</div>  
+</section>
 
       {showForm && (
         <HabitForm
