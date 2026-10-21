@@ -46,23 +46,25 @@ export default function HabitDetailsPage() {
   const [error, setError] = useState("");
 
   const [isEditing, setIsEditing] = useState(false);
-const [saving, setSaving] = useState(false);
-const [editError, setEditError] = useState("");
-const [categories, setCategories] = useState([]);
-const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-const [deleting, setDeleting] = useState(false);
-const [deleteError, setDeleteError] = useState("");
-const [editForm, setEditForm] = useState({
-  name: "",
-  description: "",
-  category_id: "",
-  frequency: "daily",
-  target_per_period: 1,
-  unit: "times",
-  start_date: "",
-  end_date: "",
-  schedule_days: [],
-});
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [certificates, setCertificates] = useState([]);
+  const [certificateError, setCertificateError] = useState("");
+  const [editForm, setEditForm] = useState({
+    name: "",
+    description: "",
+    category_id: "",
+    frequency: "daily",
+    target_per_period: 1,
+    unit: "times",
+    start_date: "",
+    end_date: "",
+    schedule_days: [],
+  });
 
   const loadDetails = useCallback(async () => {
     if (!id) return;
@@ -71,13 +73,40 @@ const [editForm, setEditForm] = useState({
     setError("");
 
     try {
-      const [habitResponse, checkinResponse] = await Promise.all([
+
+      const [habitResponse, checkinResponse, streakResponse] = await Promise.all([
         fetch(`/api/habits/${id}`, { cache: "no-store" }),
         fetch(`/api/habits/${id}/checkins`, { cache: "no-store" }),
+        fetch(`/api/habits/${id}/streak`, { cache: "no-store" }),
       ]);
 
       const habitData = await habitResponse.json().catch(() => ({}));
       const checkinData = await checkinResponse.json().catch(() => ({}));
+      const streakData = await streakResponse.json().catch(() => ({}));
+
+      if (!habitResponse.ok) {
+        throw new Error(habitData.error || "Unable to load habit.");
+      }
+
+      if (!checkinResponse.ok) {
+        throw new Error(
+          checkinData.error || "Unable to load check-in history."
+        );
+      }
+
+      if (!streakResponse.ok) {
+        throw new Error(
+          streakData.error || "Unable to load certificates."
+        );
+      }
+
+      setHabit(habitData.data);
+      setCheckins(Array.isArray(checkinData.data) ? checkinData.data : []);
+      setCertificates(
+        Array.isArray(streakData.certificates) ? streakData.certificates : []
+      );
+      setCertificateError("");
+
 
       if (!habitResponse.ok) {
         throw new Error(habitData.error || "Unable to load habit.");
@@ -98,160 +127,160 @@ const [editForm, setEditForm] = useState({
     }
   }, [id]);
 
-const openEditForm = async () => {
-  setEditError("");
+  const openEditForm = async () => {
+    setEditError("");
 
-  try {
-    const response = await fetch("/api/habits/categories", {
-      cache: "no-store",
-    });
+    try {
+      const response = await fetch("/api/habits/categories", {
+        cache: "no-store",
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error(result.error || "Unable to load categories.");
-    }
+      if (!response.ok) {
+        throw new Error(result.error || "Unable to load categories.");
+      }
 
-    const categoryList = Array.isArray(result.categories)
-      ? result.categories
-      : Array.isArray(result.data)
-        ? result.data
-        : [];
+      const categoryList = Array.isArray(result.categories)
+        ? result.categories
+        : Array.isArray(result.data)
+          ? result.data
+          : [];
 
-    setCategories(categoryList);
+      setCategories(categoryList);
 
-    setEditForm({
-      name: habit.name || "",
-      description: habit.description || "",
-      category_id: habit.category_id || "",
-      frequency: habit.frequency || "daily",
-      target_per_period: habit.target_per_period || 1,
-      unit: habit.unit || "times",
-      start_date: String(habit.start_date || "").slice(0, 10),
-      end_date: String(habit.end_date || "").slice(0, 10),
-      schedule_days: Array.isArray(habit.schedule_days)
-        ? habit.schedule_days.map(Number)
-        : [],
-    });
-
-    setIsEditing(true);
-  } catch (err) {
-    setEditError(err.message || "Unable to open edit form.");
-  }
-};
-
-const updateEditField = (event) => {
-  const { name, value } = event.target;
-
-  setEditForm((current) => ({
-    ...current,
-    [name]: name === "target_per_period" ? Number(value) : value,
-  }));
-};
-
-const toggleScheduleDay = (day) => {
-  setEditForm((current) => ({
-    ...current,
-    schedule_days: current.schedule_days.includes(day)
-      ? current.schedule_days.filter((item) => item !== day)
-      : [...current.schedule_days, day].sort((a, b) => a - b),
-  }));
-};
-
-const saveHabitChanges = async (event) => {
-  event.preventDefault();
-  setEditError("");
-
-  if (!editForm.name.trim()) {
-    setEditError("Habit name is required.");
-    return;
-  }
-
-  if (
-    !Number.isInteger(Number(editForm.target_per_period)) ||
-    Number(editForm.target_per_period) < 1
-  ) {
-    setEditError("Target must be a positive whole number.");
-    return;
-  }
-
-  if (
-    editForm.end_date &&
-    editForm.end_date < editForm.start_date
-  ) {
-    setEditError("End date must be on or after start date.");
-    return;
-  }
-
-  if (
-    editForm.frequency === "selected_days" &&
-    editForm.schedule_days.length === 0
-  ) {
-    setEditError("Select at least one weekday.");
-    return;
-  }
-
-  setSaving(true);
-
-  try {
-    const payload = {
-      ...editForm,
-      name: editForm.name.trim(),
-      description: editForm.description.trim(),
-      category_id: editForm.category_id || null,
-      target_per_period: Number(editForm.target_per_period),
-      end_date: editForm.end_date || null,
-      schedule_days:
-        editForm.frequency === "selected_days"
-          ? editForm.schedule_days
+      setEditForm({
+        name: habit.name || "",
+        description: habit.description || "",
+        category_id: habit.category_id || "",
+        frequency: habit.frequency || "daily",
+        target_per_period: habit.target_per_period || 1,
+        unit: habit.unit || "times",
+        start_date: String(habit.start_date || "").slice(0, 10),
+        end_date: String(habit.end_date || "").slice(0, 10),
+        schedule_days: Array.isArray(habit.schedule_days)
+          ? habit.schedule_days.map(Number)
           : [],
-    };
+      });
 
-    const response = await fetch(`/api/habits/${id}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      setIsEditing(true);
+    } catch (err) {
+      setEditError(err.message || "Unable to open edit form.");
+    }
+  };
 
-    const result = await response.json();
+  const updateEditField = (event) => {
+    const { name, value } = event.target;
 
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to update habit.");
+    setEditForm((current) => ({
+      ...current,
+      [name]: name === "target_per_period" ? Number(value) : value,
+    }));
+  };
+
+  const toggleScheduleDay = (day) => {
+    setEditForm((current) => ({
+      ...current,
+      schedule_days: current.schedule_days.includes(day)
+        ? current.schedule_days.filter((item) => item !== day)
+        : [...current.schedule_days, day].sort((a, b) => a - b),
+    }));
+  };
+
+  const saveHabitChanges = async (event) => {
+    event.preventDefault();
+    setEditError("");
+
+    if (!editForm.name.trim()) {
+      setEditError("Habit name is required.");
+      return;
     }
 
-    setIsEditing(false);
-    await loadDetails();
-  } catch (err) {
-    setEditError(err.message || "Failed to save changes.");
-  } finally {
-    setSaving(false);
-  }
-};
-const deleteHabit = async () => {
-  if (deleting) return;
-
-  setDeleting(true);
-  setDeleteError("");
-
-  try {
-    const response = await fetch(`/api/habits/${id}`, {
-      method: "DELETE",
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Failed to delete habit.");
+    if (
+      !Number.isInteger(Number(editForm.target_per_period)) ||
+      Number(editForm.target_per_period) < 1
+    ) {
+      setEditError("Target must be a positive whole number.");
+      return;
     }
 
-    router.push("/habits");
-  } catch (error) {
-    setDeleteError(error.message || "Something went wrong.");
-    setDeleting(false);
-  }
-};
+    if (
+      editForm.end_date &&
+      editForm.end_date < editForm.start_date
+    ) {
+      setEditError("End date must be on or after start date.");
+      return;
+    }
+
+    if (
+      editForm.frequency === "selected_days" &&
+      editForm.schedule_days.length === 0
+    ) {
+      setEditError("Select at least one weekday.");
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      const payload = {
+        ...editForm,
+        name: editForm.name.trim(),
+        description: editForm.description.trim(),
+        category_id: editForm.category_id || null,
+        target_per_period: Number(editForm.target_per_period),
+        end_date: editForm.end_date || null,
+        schedule_days:
+          editForm.frequency === "selected_days"
+            ? editForm.schedule_days
+            : [],
+      };
+
+      const response = await fetch(`/api/habits/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update habit.");
+      }
+
+      setIsEditing(false);
+      await loadDetails();
+    } catch (err) {
+      setEditError(err.message || "Failed to save changes.");
+    } finally {
+      setSaving(false);
+    }
+  };
+  const deleteHabit = async () => {
+    if (deleting) return;
+
+    setDeleting(true);
+    setDeleteError("");
+
+    try {
+      const response = await fetch(`/api/habits/${id}`, {
+        method: "DELETE",
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to delete habit.");
+      }
+
+      router.push("/habits");
+    } catch (error) {
+      setDeleteError(error.message || "Something went wrong.");
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     loadDetails();
@@ -380,207 +409,207 @@ const deleteHabit = async () => {
           </p>
         </div>
 
-       <div className={styles.headerActions}>
-  <span className={styles.status}>{habit.status}</span>
+        <div className={styles.headerActions}>
+          <span className={styles.status}>{habit.status}</span>
 
-  {!isEditing && (
-    <button
-      type="button"
-      className={styles.editButton}
-      onClick={openEditForm}
-    >
-      ✎ Edit Habit
-    </button>
-  )}
+          {!isEditing && (
+            <button
+              type="button"
+              className={styles.editButton}
+              onClick={openEditForm}
+            >
+              ✎ Edit Habit
+            </button>
+          )}
 
-  <button
-  type="button"
-  className={styles.deleteButton}
-  onClick={() => {
-    setDeleteError("");
-    setShowDeleteDialog(true);
-  }}
->
-  Delete Habit
-</button>
-</div>
+          <button
+            type="button"
+            className={styles.deleteButton}
+            onClick={() => {
+              setDeleteError("");
+              setShowDeleteDialog(true);
+            }}
+          >
+            Delete Habit
+          </button>
+        </div>
       </header>
 
-{isEditing && (
-  <section className={styles.editCard}>
-    <div className={styles.editHeading}>
-      <div>
-        <p className={styles.eyebrow}>HABIT SETTINGS</p>
-        <h2>Edit Habit</h2>
-      </div>
+      {isEditing && (
+        <section className={styles.editCard}>
+          <div className={styles.editHeading}>
+            <div>
+              <p className={styles.eyebrow}>HABIT SETTINGS</p>
+              <h2>Edit Habit</h2>
+            </div>
 
-      <button
-        type="button"
-        className={styles.cancelButton}
-        disabled={saving}
-        onClick={() => {
-          setIsEditing(false);
-          setEditError("");
-        }}
-      >
-        Cancel
-      </button>
-    </div>
-
-    {editError && (
-      <p className={styles.editError} role="alert">
-        {editError}
-      </p>
-    )}
-
-    <form onSubmit={saveHabitChanges} className={styles.editForm}>
-      <label>
-        Habit name *
-        <input
-          name="name"
-          value={editForm.name}
-          onChange={updateEditField}
-          maxLength={150}
-          required
-        />
-      </label>
-
-      <label>
-        Description
-        <textarea
-          name="description"
-          value={editForm.description}
-          onChange={updateEditField}
-          rows={3}
-        />
-      </label>
-
-      <label>
-        Category
-        <select
-          name="category_id"
-          value={editForm.category_id}
-          onChange={updateEditField}
-        >
-          <option value="">No category</option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div className={styles.formRow}>
-        <label>
-          Frequency *
-          <select
-            name="frequency"
-            value={editForm.frequency}
-            onChange={updateEditField}
-          >
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="selected_days">Selected days</option>
-          </select>
-        </label>
-
-        <label>
-          Target *
-          <input
-            name="target_per_period"
-            type="number"
-            min="1"
-            step="1"
-            value={editForm.target_per_period}
-            onChange={updateEditField}
-            required
-          />
-        </label>
-      </div>
-
-      <label>
-        Unit
-        <input
-          name="unit"
-          value={editForm.unit}
-          onChange={updateEditField}
-          maxLength={50}
-        />
-      </label>
-
-      {editForm.frequency === "selected_days" && (
-        <fieldset className={styles.scheduleField}>
-          <legend>Choose weekdays *</legend>
-
-          <div className={styles.weekdayOptions}>
-            {[
-              { label: "Sun", value: 0 },
-              { label: "Mon", value: 1 },
-              { label: "Tue", value: 2 },
-              { label: "Wed", value: 3 },
-              { label: "Thu", value: 4 },
-              { label: "Fri", value: 5 },
-              { label: "Sat", value: 6 },
-            ].map((day) => (
-              <label key={day.value}>
-                <input
-                  type="checkbox"
-                  checked={editForm.schedule_days.includes(day.value)}
-                  onChange={() => toggleScheduleDay(day.value)}
-                />
-                {day.label}
-              </label>
-            ))}
+            <button
+              type="button"
+              className={styles.cancelButton}
+              disabled={saving}
+              onClick={() => {
+                setIsEditing(false);
+                setEditError("");
+              }}
+            >
+              Cancel
+            </button>
           </div>
-        </fieldset>
+
+          {editError && (
+            <p className={styles.editError} role="alert">
+              {editError}
+            </p>
+          )}
+
+          <form onSubmit={saveHabitChanges} className={styles.editForm}>
+            <label>
+              Habit name *
+              <input
+                name="name"
+                value={editForm.name}
+                onChange={updateEditField}
+                maxLength={150}
+                required
+              />
+            </label>
+
+            <label>
+              Description
+              <textarea
+                name="description"
+                value={editForm.description}
+                onChange={updateEditField}
+                rows={3}
+              />
+            </label>
+
+            <label>
+              Category
+              <select
+                name="category_id"
+                value={editForm.category_id}
+                onChange={updateEditField}
+              >
+                <option value="">No category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className={styles.formRow}>
+              <label>
+                Frequency *
+                <select
+                  name="frequency"
+                  value={editForm.frequency}
+                  onChange={updateEditField}
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="selected_days">Selected days</option>
+                </select>
+              </label>
+
+              <label>
+                Target *
+                <input
+                  name="target_per_period"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={editForm.target_per_period}
+                  onChange={updateEditField}
+                  required
+                />
+              </label>
+            </div>
+
+            <label>
+              Unit
+              <input
+                name="unit"
+                value={editForm.unit}
+                onChange={updateEditField}
+                maxLength={50}
+              />
+            </label>
+
+            {editForm.frequency === "selected_days" && (
+              <fieldset className={styles.scheduleField}>
+                <legend>Choose weekdays *</legend>
+
+                <div className={styles.weekdayOptions}>
+                  {[
+                    { label: "Sun", value: 0 },
+                    { label: "Mon", value: 1 },
+                    { label: "Tue", value: 2 },
+                    { label: "Wed", value: 3 },
+                    { label: "Thu", value: 4 },
+                    { label: "Fri", value: 5 },
+                    { label: "Sat", value: 6 },
+                  ].map((day) => (
+                    <label key={day.value}>
+                      <input
+                        type="checkbox"
+                        checked={editForm.schedule_days.includes(day.value)}
+                        onChange={() => toggleScheduleDay(day.value)}
+                      />
+                      {day.label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+
+            <div className={styles.formRow}>
+              <label>
+                Start date *
+                <input
+                  type="date"
+                  name="start_date"
+                  value={editForm.start_date}
+                  onChange={updateEditField}
+                  required
+                />
+              </label>
+
+              <label>
+                End date
+                <input
+                  type="date"
+                  name="end_date"
+                  value={editForm.end_date}
+                  min={editForm.start_date || undefined}
+                  onChange={updateEditField}
+                />
+              </label>
+            </div>
+
+            <div className={styles.formActions}>
+              <button
+                type="button"
+                className={styles.cancelButton}
+                disabled={saving}
+                onClick={() => setIsEditing(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                className={styles.saveButton}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </form>
+        </section>
       )}
-
-      <div className={styles.formRow}>
-        <label>
-          Start date *
-          <input
-            type="date"
-            name="start_date"
-            value={editForm.start_date}
-            onChange={updateEditField}
-            required
-          />
-        </label>
-
-        <label>
-          End date
-          <input
-            type="date"
-            name="end_date"
-            value={editForm.end_date}
-            min={editForm.start_date || undefined}
-            onChange={updateEditField}
-          />
-        </label>
-      </div>
-
-      <div className={styles.formActions}>
-        <button
-          type="button"
-          className={styles.cancelButton}
-          disabled={saving}
-          onClick={() => setIsEditing(false)}
-        >
-          Cancel
-        </button>
-
-        <button
-          type="submit"
-          className={styles.saveButton}
-          disabled={saving}
-        >
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
-    </form>
-  </section>
-)}
 
 
 
@@ -722,51 +751,105 @@ const deleteHabit = async () => {
       </section>
 
 
-      {showDeleteDialog && (
-  <div className={styles.dialogOverlay}>
-    <div
-      className={styles.deleteDialog}
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="delete-dialog-title"
-      aria-describedby="delete-dialog-description"
-    >
-      <h2 id="delete-dialog-title">Delete Habit?</h2>
+<section className={styles.historyCard}>
+  <h2>Earned Certificates</h2>
 
-      <p id="delete-dialog-description">
-        Are you sure you want to delete "{habit.name}"?
-        All schedules and check-in history will be permanently deleted.
-        This action cannot be undone.
-      </p>
+  {certificateError && (
+    <p className={styles.error} role="alert">
+      {certificateError}
+    </p>
+  )}
 
-      {deleteError && (
-        <p className={styles.deleteError} role="alert">
-          {deleteError}
-        </p>
-      )}
-
-      <div className={styles.dialogActions}>
-        <button
-          type="button"
-          className={styles.cancelButton}
-          onClick={() => setShowDeleteDialog(false)}
-          disabled={deleting}
+  {certificates.length === 0 ? (
+    <p className={styles.empty}>
+      No certificates earned yet. Keep building your streak!
+    </p>
+  ) : (
+    <div className={styles.historyList}>
+      {certificates.map((certificate) => (
+        <article
+          key={certificate.id}
+          className={styles.historyItem}
         >
-          Cancel
-        </button>
+          <div>
+            <strong>
+              {certificate.certificate_level} Certificate
+            </strong>
 
-        <button
-          type="button"
-          className={styles.confirmDeleteButton}
-          onClick={deleteHabit}
-          disabled={deleting}
-        >
-          {deleting ? "Deleting..." : "Delete Permanently"}
-        </button>
-      </div>
+            <p>
+              Milestone: {certificate.milestone_percent}%
+            </p>
+
+            <p>
+              Best streak at award:{" "}
+              {certificate.best_streak_at_award} scheduled days
+            </p>
+
+            <p>
+              Awarded: {formatDate(certificate.earned_at)}
+            </p>
+          </div>
+
+          <a
+            href={`/api/habits/${id}/certificates/${certificate.id}`}
+            className={styles.saveButton}
+          >
+            Download PDF
+          </a>
+        </article>
+      ))}
     </div>
-  </div>
-)}
+  )}
+</section>
+
+
+
+
+      {showDeleteDialog && (
+        <div className={styles.dialogOverlay}>
+          <div
+            className={styles.deleteDialog}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-dialog-title"
+            aria-describedby="delete-dialog-description"
+          >
+            <h2 id="delete-dialog-title">Delete Habit?</h2>
+
+            <p id="delete-dialog-description">
+              Are you sure you want to delete "{habit.name}"?
+              All schedules and check-in history will be permanently deleted.
+              This action cannot be undone.
+            </p>
+
+            {deleteError && (
+              <p className={styles.deleteError} role="alert">
+                {deleteError}
+              </p>
+            )}
+
+            <div className={styles.dialogActions}>
+              <button
+                type="button"
+                className={styles.cancelButton}
+                onClick={() => setShowDeleteDialog(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className={styles.confirmDeleteButton}
+                onClick={deleteHabit}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete Permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
