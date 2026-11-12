@@ -6,12 +6,26 @@ const schema = "habit_maker";
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userid");
     const status = searchParams.get("status");
     const search = searchParams.get("search");
+
+    // 1. Validate that userid is ALWAYS provided
+    if (!userId) {
+      return Response.json(
+        { error: "Missing or invalid userid." },
+        { status: 400 }
+      );
+    }
 
     const values = [];
     const filters = [];
 
+    // 2. Always add userid to the filters first
+    values.push(userId);
+    filters.push(`h.userid = $${values.length}`);
+
+    // 3. Handle optional status filter
     if (status) {
       const allowed = [
         "active",
@@ -31,60 +45,61 @@ export async function GET(request) {
       filters.push(`h.status = $${values.length}`);
     }
 
+    // 4. Handle optional search filter
     if (search?.trim()) {
       values.push(`%${search.trim()}%`);
       filters.push(`h.name ILIKE $${values.length}`);
     }
 
+    // 5. Build WHERE clause safely (Fixed 'Whare' to 'WHERE')
     const where = filters.length
       ? `WHERE ${filters.join(" AND ")}`
       : "";
 
     const result = await pool.query(
-       `SELECT
-     h.*,
-     c.name AS category_name,
-     COALESCE(
-       (
-         SELECT json_agg(s.day_of_week ORDER BY s.day_of_week)
-         FROM ${schema}.habit_schedules s
-         WHERE s.habit_id = h.id
-       ),
-       '[]'::json
-     ) AS schedule_days,
-     COALESCE(
-       (
-         SELECT hc.completed
-         FROM ${schema}.habit_checkins hc
-         WHERE hc.habit_id = h.id
-           AND hc.checkin_date = CURRENT_DATE
-       ),
-       false
-     ) AS completed_today,
-     (
-       SELECT hc.progress_value
-       FROM ${schema}.habit_checkins hc
-       WHERE hc.habit_id = h.id
-         AND hc.checkin_date = CURRENT_DATE
-     ) AS progress_today
-   FROM ${schema}.habits h
-   LEFT JOIN ${schema}.habit_categories c
-     ON c.id = h.category_id
-   ${where}
-   ORDER BY h.created_at DESC`,
-  values
+      `SELECT
+         h.*,
+         c.name AS category_name,
+         COALESCE(
+           (
+             SELECT json_agg(s.day_of_week ORDER BY s.day_of_week)
+             FROM ${schema}.habit_schedules s
+             WHERE s.habit_id = h.id
+           ),
+           '[]'::json
+         ) AS schedule_days,
+         COALESCE(
+           (
+             SELECT hc.completed
+             FROM ${schema}.habit_checkins hc
+             WHERE hc.habit_id = h.id
+               AND hc.checkin_date = CURRENT_DATE
+           ),
+           false
+         ) AS completed_today,
+         (
+           SELECT hc.progress_value
+           FROM ${schema}.habit_checkins hc
+           WHERE hc.habit_id = h.id
+             AND hc.checkin_date = CURRENT_DATE
+         ) AS progress_today
+       FROM ${schema}.habits h
+       LEFT JOIN ${schema}.habit_categories c
+         ON c.id = h.category_id
+       ${where}
+       ORDER BY h.created_at DESC`,
+      values
     );
 
-    return Response.json({ data: result.rows });
+    return Response.json({ data: result.rows, userId: userId });
   } catch (error) {
     console.error("GET habits error:", error);
     return Response.json(
-      { error: "Failed to fetch habits." },
+      { error: `Failed to fetch habits.  ${error.message}` },
       { status: 500 }
     );
   }
 }
-
 export async function POST(request) {
   const client = await pool.connect();
 
@@ -155,10 +170,10 @@ export async function POST(request) {
     }
 
     if (!Array.isArray(schedule_days) ||
-        schedule_days.some(
-          day => !Number.isInteger(day) || day < 0 || day > 6
-        ) ||
-        new Set(schedule_days).size !== schedule_days.length) {
+      schedule_days.some(
+        day => !Number.isInteger(day) || day < 0 || day > 6
+      ) ||
+      new Set(schedule_days).size !== schedule_days.length) {
       return Response.json(
         { error: "schedule_days must contain unique integers from 0 to 6." },
         { status: 400 }
@@ -240,7 +255,7 @@ export async function POST(request) {
 
 function isDate(value) {
   if (typeof value !== "string" ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false;
   }
 
