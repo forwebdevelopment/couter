@@ -16,14 +16,17 @@ function localDateString(date = new Date()) {
 function formatDate(dateString) {
   if (!dateString) return "—";
 
-  const [year, month, day] = dateString.slice(0, 10).split("-").map(Number);
+  const [year, month, day] = dateString
+    .slice(0, 10)
+    .split("-")
+    .map(Number);
 
   return new Intl.DateTimeFormat("en-IN", {
     day: "numeric",
     month: "short",
     year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(Date.UTC(year, month - 1, day)));
+    timeZone: "Asia/Kolkata",
+  }).format(new Date(Date(year, month - 1, day)));
 }
 
 function shiftMonth(date, amount) {
@@ -44,7 +47,7 @@ export default function HabitDetailsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
+  const [selectedTimelineDay, setSelectedTimelineDay] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState("");
@@ -296,6 +299,240 @@ export default function HabitDetailsPage() {
 
     return map;
   }, [checkins]);
+
+
+
+  const habitTimeline = useMemo(() => {
+    if (!habit?.start_date) return null;
+
+    const toDateKey = (value) =>
+      String(value).slice(0, 10);
+
+    const toUTCDate = (date) =>
+      new Date(`${date}T00:00:00Z`);
+
+    const addDays = (date, amount) => {
+      const result = toUTCDate(date);
+      result.setUTCDate(result.getUTCDate() + amount);
+      return result.toISOString().slice(0, 10);
+    };
+
+    const startDate = toDateKey(habit.start_date);
+    const today = localDateString();
+
+    // If no end date exists, show the timeline up to today.
+    const endDate = habit.end_date
+      ? toDateKey(habit.end_date)
+      : today;
+
+    if (endDate < startDate) return null;
+
+    const frequency = habit.frequency;
+    const target = Math.max(
+      1,
+      Number(habit.target_per_period) || 1
+    );
+
+    const scheduledDays = new Set(
+      (habit.schedule_days || []).map(Number)
+    );
+
+    const completedDates = new Set(
+      checkins
+        .filter((item) => item.completed)
+        .map((item) => toDateKey(item.checkin_date))
+    );
+
+    // Generate every calendar date in the habit duration.
+    const dates = [];
+
+    for (
+      let date = startDate;
+      date <= endDate;
+      date = addDays(date, 1)
+    ) {
+      const utcDate = toUTCDate(date);
+      const weekday = utcDate.getUTCDay();
+
+      const isFuture = date > today;
+      const isCompleted = completedDates.has(date);
+
+      const isScheduled =
+        frequency === "selected_days"
+          ? scheduledDays.has(weekday)
+          : true;
+
+      dates.push({
+        date,
+        weekday,
+        isFuture,
+        isCompleted,
+        isScheduled,
+        status: "pending",
+        weekKey: null,
+      });
+    }
+
+    // Monday is the beginning of every weekly period.
+    const getMonday = (date) => {
+      const utcDate = toUTCDate(date);
+      const weekday = utcDate.getUTCDay();
+      const daysFromMonday = (weekday + 6) % 7;
+
+      utcDate.setUTCDate(
+        utcDate.getUTCDate() - daysFromMonday
+      );
+
+      return utcDate.toISOString().slice(0, 10);
+    };
+
+    // Group dates into Monday-Sunday weeks.
+    const weeks = new Map();
+
+    for (const day of dates) {
+      const monday = getMonday(day.date);
+      const sunday = addDays(monday, 6);
+
+      day.weekKey = monday;
+
+      if (!weeks.has(monday)) {
+        weeks.set(monday, {
+          start: monday,
+          end: sunday,
+          completed: 0,
+          target,
+          achieved: false,
+          closed: false,
+        });
+      }
+
+      const week = weeks.get(monday);
+
+      if (day.isCompleted) {
+        week.completed++;
+      }
+    }
+
+    let achievedWeeks = 0;
+    let missedWeeks = 0;
+    let completedWeeks = 0;
+    let currentWeekProgress = 0;
+
+    for (const week of weeks.values()) {
+      week.achieved = week.completed >= target;
+
+      // A week closes on Sunday, or when the habit duration ends.
+      const actualWeekEnd =
+        week.end < endDate ? week.end : endDate;
+
+      week.closed = actualWeekEnd <= today;
+
+      if (week.achieved && week.closed) {
+        achievedWeeks++;
+      }
+
+      if (week.closed) {
+        completedWeeks++;
+
+        if (!week.achieved) {
+          missedWeeks++;
+        }
+      }
+
+      if (
+        today >= week.start &&
+        today <= week.end
+      ) {
+        currentWeekProgress = week.completed;
+      }
+    }
+
+    // Assign a visual status to every calendar date.
+    for (const day of dates) {
+      if (day.isFuture) {
+        day.status = "future";
+        continue;
+      }
+
+      if (day.isCompleted) {
+        day.status = "completed";
+        continue;
+      }
+
+      if (
+        frequency === "selected_days" &&
+        !day.isScheduled
+      ) {
+        day.status = "unscheduled";
+        continue;
+      }
+
+      if (frequency === "weekly") {
+        const week = weeks.get(day.weekKey);
+
+        day.status = week.achieved
+          ? "target-met"
+          : "pending";
+
+        continue;
+      }
+
+      // Daily and selected-days habits.
+      day.status = "missed";
+    }
+
+    const completedDays = dates.filter(
+      (day) => day.status === "completed"
+    ).length;
+
+    const eligibleDays = dates.filter(
+      (day) =>
+        !day.isFuture &&
+        day.isScheduled
+    ).length;
+
+    const missedDays = dates.filter(
+      (day) => day.status === "missed"
+    ).length;
+
+    const totalDays = dates.length;
+
+    let percentage = 0;
+
+    if (frequency === "weekly") {
+      percentage =
+        completedWeeks > 0
+          ? Math.round(
+            (achievedWeeks / completedWeeks) * 100
+          )
+          : 0;
+    } else {
+      percentage =
+        eligibleDays > 0
+          ? Math.round(
+            (completedDays / eligibleDays) * 100
+          )
+          : 0;
+    }
+
+    return {
+      dates,
+      totalDays,
+      completedDays,
+      missedDays,
+      eligibleDays,
+      percentage: Math.min(percentage, 100),
+
+      weekly: {
+        achievedWeeks,
+        missedWeeks,
+        completedWeeks,
+        currentWeekProgress,
+        target,
+      },
+    };
+  }, [habit, checkins]);
+
 
   const calendarDays = useMemo(() => {
     const year = month.getFullYear();
@@ -712,7 +949,7 @@ export default function HabitDetailsPage() {
           </span>
         </div>
       </section>
-
+      {/* 
       <section className={styles.historyCard}>
         <h2>Check-in history</h2>
 
@@ -748,59 +985,145 @@ export default function HabitDetailsPage() {
             })}
           </div>
         )}
-      </section>
+      </section> */}
 
+      {/* ================================================================ */}
 
-<section className={styles.historyCard}>
-  <h2>Earned Certificates</h2>
+      {habitTimeline && (
+        <section className={styles.timelineCard}>
+          <div className={styles.timelineHeader}>
+            <div>
+              <h2>Habit Duration</h2>
+              <p>
+                {habitTimeline.totalDays} total days ·{" "}
+                {habitTimeline.completedDays} completed
+              </p>
 
-  {certificateError && (
-    <p className={styles.error} role="alert">
-      {certificateError}
-    </p>
-  )}
+              <div className={styles.timelineDateRange}>
+                <span>
+                  <strong>Start:</strong>{" "}
+                  {formatDate(habit.start_date)}
+                </span>
 
-  {certificates.length === 0 ? (
-    <p className={styles.empty}>
-      No certificates earned yet. Keep building your streak!
-    </p>
-  ) : (
-    <div className={styles.historyList}>
-      {certificates.map((certificate) => (
-        <article
-          key={certificate.id}
-          className={styles.historyItem}
-        >
-          <div>
-            <strong>
-              {certificate.certificate_level} Certificate
-            </strong>
+                <span>
+                  <strong>End:</strong>{" "}
+                  {habit.end_date
+                    ? formatDate(habit.end_date)
+                    : "No end date"}
+                </span>
+              </div>
+            </div>
 
-            <p>
-              Milestone: {certificate.milestone_percent}%
-            </p>
-
-            <p>
-              Best streak at award:{" "}
-              {certificate.best_streak_at_award} scheduled days
-            </p>
-
-            <p>
-              Awarded: {formatDate(certificate.earned_at)}
-            </p>
+            <div className={styles.timelinePercentage}>
+              {habitTimeline.percentage}%
+            </div>
           </div>
 
-          <a
-            href={`/api/habits/${id}/certificates/${certificate.id}`}
-            className={styles.saveButton}
-          >
-            Download PDF
-          </a>
-        </article>
-      ))}
-    </div>
-  )}
-</section>
+          <div className={styles.timelineProgress}>
+            <div
+              className={styles.timelineProgressFill}
+              style={{ width: `${habitTimeline.percentage}%` }}
+            />
+          </div>
+
+          <div className={styles.timelineDays}>
+            {habitTimeline.dates.map((day) => (
+              <button
+                key={day.date}
+                type="button"
+                title={day.date}
+                className={`${styles.timelineDay} ${styles[`timelineDay_${day.status}`]
+                  } ${selectedTimelineDay?.date === day.date
+                    ? styles.timelineDaySelected
+                    : ""
+                  }`}
+                onClick={() => setSelectedTimelineDay(day)}
+              >
+                {Number(day.date.slice(8, 10))}
+              </button>
+            ))}
+          </div>
+
+          {selectedTimelineDay && (
+            <div className={styles.timelineSelectedInfo}>
+              <strong>{selectedTimelineDay.date}</strong>
+              <span>
+                {selectedTimelineDay.status === "completed"
+                  ? "Completed"
+                  : selectedTimelineDay.status === "missed"
+                    ? "Not completed"
+                    : selectedTimelineDay.status === "future"
+                      ? "Upcoming"
+                      : selectedTimelineDay.status === "unscheduled"
+                        ? "Not scheduled"
+                        : "Weekly target achieved"}
+              </span>
+            </div>
+          )}
+
+          <div className={styles.timelineLegend}>
+            <span><i className={styles.legendCompleted} /> Completed</span>
+            <span><i className={styles.legendMissed} /> Not completed</span>
+            <span><i className={styles.legendFuture} /> Upcoming</span>
+          </div>
+        </section>
+      )}
+
+
+
+      {/* ================================================================== */}
+
+
+      <section className={styles.historyCard}>
+        <h2>Earned Certificates</h2>
+
+        {certificateError && (
+          <p className={styles.error} role="alert">
+            {certificateError}
+          </p>
+        )}
+
+        {certificates.length === 0 ? (
+          <p className={styles.empty}>
+            No certificates earned yet. Keep building your streak!
+          </p>
+        ) : (
+          <div className={styles.historyList}>
+            {certificates.map((certificate) => (
+              <article
+                key={certificate.id}
+                className={styles.historyItem}
+              >
+                <div>
+                  <strong>
+                    {certificate.certificate_level} Certificate
+                  </strong>
+
+                  <p>
+                    Milestone: {certificate.milestone_percent}%
+                  </p>
+
+                  <p>
+                    Best streak at award:{" "}
+                    {certificate.best_streak_at_award} scheduled days
+                  </p>
+
+                  <p>
+                    Awarded: {formatDate(certificate.earned_at)}
+                  </p>
+                </div>
+
+                <a
+                  href={`/api/habits/${id}/certificates/${certificate.id}`}
+                  className={styles.saveButton}
+                >
+                  Download PDF
+                </a>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
 
 
 

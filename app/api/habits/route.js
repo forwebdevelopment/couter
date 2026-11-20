@@ -107,6 +107,7 @@ export async function POST(request) {
     const body = await request.json();
 
     const {
+      userid,
       name,
       description = null,
       category_id = null,
@@ -119,6 +120,13 @@ export async function POST(request) {
       icon = null,
       schedule_days = [],
     } = body;
+
+    if (!userid) {
+  return Response.json(
+    { error: "User ID is required to create a habit." },
+    { status: 400 }
+    );
+    }
 
     if (
       typeof name !== "string" ||
@@ -192,27 +200,30 @@ export async function POST(request) {
 
     await client.query("BEGIN");
 
-    const result = await client.query(
-      `INSERT INTO ${schema}.habits (
-         name, description, category_id, frequency,
-         target_per_period, unit, start_date, end_date,
-         color, icon
-       )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-       RETURNING *`,
-      [
-        name.trim(),
-        description,
-        category_id,
-        frequency,
-        target_per_period,
-        unit,
-        start_date,
-        end_date,
-        color,
-        icon,
-      ]
-    );
+   
+const result = await client.query(
+  `INSERT INTO ${schema}.habits (
+     userid, name, description, category_id, frequency,
+     target_per_period, unit, start_date, end_date,
+     color, icon
+   )
+   VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+   RETURNING *`,
+  [
+    userid,
+    name.trim(),
+    description,
+    category_id,
+    frequency,
+    target_per_period,
+    unit,
+    start_date,
+    end_date,
+    color,
+    icon,
+  ]
+);
+
 
     const habit = result.rows[0];
 

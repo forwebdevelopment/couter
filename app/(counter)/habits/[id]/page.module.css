@@ -830,3 +830,254 @@
     font-size: 10px;
   }
 }
+
+
+/* new css habit time line */
+
+
+/* ================================
+   HABIT DURATION TIMELINE
+================================ */
+
+.timelineCard {
+  background: var(--surface, #ffffff);
+  border: 1px solid var(--border, #e8edf5);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04);
+}
+
+.timelineHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.timelineHeader h2 {
+  margin: 0 0 6px;
+  color: var(--text, #172033);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.timelineHeader p {
+  margin: 0;
+  color: var(--muted, #64748b);
+  font-size: 13px;
+}
+
+.timelinePercentage {
+  color: #15803d;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.timelineProgress {
+  height: 9px;
+  width: 100%;
+  background: #e9edf5;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 22px;
+}
+
+.timelineProgressFill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 20px;
+  transition: width 0.3s ease;
+}
+
+.timelineDays {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.timelineDay {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.timelineDay:hover {
+  transform: translateY(-2px);
+  border-color: #64748b;
+}
+
+/* Completed day */
+.timelineDay_completed {
+  background: #dcfce7;
+  border-color: #86efac;
+  color: #166534;
+}
+
+/* Missed day */
+.timelineDay_missed,
+.timelineDay_pending {
+  background: #ffffff;
+  border-color: #e2e8f0;
+  color: #475569;
+}
+
+/* Future day */
+.timelineDay_future {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+  cursor: default;
+}
+
+/* Non-scheduled day */
+.timelineDay_unscheduled {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #94a3b8;
+}
+
+/* Weekly target already achieved */
+.timelineDay_target-met {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #047857;
+}
+
+.timelineDaySelected {
+  outline: 2px solid #4f46e5;
+  outline-offset: 2px;
+}
+
+.timelineSelectedInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-top: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9px;
+  font-size: 13px;
+}
+
+.timelineSelectedInfo strong {
+  color: #172033;
+}
+
+.timelineSelectedInfo span {
+  color: #64748b;
+}
+
+.timelineLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  border-top: 1px solid var(--border, #e8edf5);
+  margin-top: 18px;
+  padding-top: 15px;
+}
+
+.timelineLegend span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted, #64748b);
+  font-size: 12px;
+}
+
+.timelineLegend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legendCompleted {
+  background: #86efac;
+}
+
+.legendMissed {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.legendFuture {
+  background: #e2e8f0;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .timelineCard {
+    padding: 17px;
+  }
+
+  .timelineHeader h2 {
+    font-size: 18px;
+  }
+
+  .timelinePercentage {
+    font-size: 22px;
+  }
+
+  .timelineDay {
+    flex-basis: 38px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .timelineDays {
+    gap: 6px;
+  }
+
+  .timelineLegend {
+    gap: 12px;
+  }
+}
+/* Habit Date Range */
+.timelineDateRange {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.timelineDateRange span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 13px;
+}
+
+.timelineDateRange strong {
+  color: #195972;
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .timelineDateRange {
+    flex-direction: column;
+  }
+
+  .timelineDateRange span {
+    width: 100%;
+  }
+}

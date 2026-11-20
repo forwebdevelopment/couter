@@ -161,35 +161,57 @@ export default function HabitsPage() {
     loadData();
   }, [loadData]);
 
-  const createHabit = async (formData) => {
-    debugger
-    console.log(formData)
-    setSaving(true);
-    setError("");
-    setNotice("");
+ 
+const createHabit = async (formData) => {
+  setSaving(true);
+  setError("");
+  setNotice("");
 
-    try {
-      const response = await fetch("/api/habits", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+  try {
+    // Get logged-in user from localStorage
+    const storedUser = localStorage.getItem("user");
 
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || "Could not create habit.");
-      }
-
-      setShowForm(false);
-      setNotice("Habit created successfully.");
-      await loadData();
-    } catch (err) {
-      setError(err.message || "Could not create habit.");
-    } finally {
-      setSaving(false);
+    if (!storedUser) {
+      router.push("/login");
+      return;
     }
-  };
+
+    const parsedUser = JSON.parse(storedUser);
+    const userId = parsedUser?.userId;
+
+    if (!userId) {
+      throw new Error("User ID not found. Please log in again.");
+    }
+
+    const payload = {
+      ...formData,
+      userid: userId,
+    };
+
+    const response = await fetch("/api/habits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || data.message || "Could not create habit."
+      );
+    }
+
+    setShowForm(false);
+    setNotice("Habit created successfully.");
+    await loadData();
+
+  } catch (err) {
+    setError(err.message || "Could not create habit.");
+  } finally {
+    setSaving(false);
+  }
+};
 
   const checkIn = async (habit) => {
     console.log(habit)
